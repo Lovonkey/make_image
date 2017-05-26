@@ -27,20 +27,7 @@ struct rgba {
 
 void usage(void)
 {
-	printf("usage: mkimage X Y\n");
-}
-
-int mkmid(int cur, int total)
-{
-        int mid;
-
-        if (cur >= total / 2)
-                mid = total / 2 - 1;
-        else
-                mid = total / 2;
-        
-        return mid;
-
+	printf("usage: mkimage X Y pix\n");
 }
 
 void mkrgba(struct rgba *rgba, enum colours colour)
@@ -76,17 +63,19 @@ int main(int argc, char *argv[])
 	int i, j, fd;
 	int len;
 	struct rgba rgba;
-        int mid = 0;
-	char outfile[32] = {0};
+	int pix = 0;
+        char outfile[32] = {0};
 	char cmd[32] = {0};
+
 	
-	if (argc < 3) {
+	if (argc < 4) {
 		usage();
 		return -1;
 	}
 
         x = atoi(argv[1]);
 	y = atoi(argv[2]);
+        pix = atoi(argv[3]);
 
 	printf("x = %d y = %d\n",x ,y);
 
@@ -106,17 +95,15 @@ int main(int argc, char *argv[])
 
         for (i = 0; i < y; i++) {
                 for (j = 0; j < x; j++) {
-                        mid = mkmid(i, y);
-                        if (abs(i - mid) >= mid) {
+                        if ((i < pix) || i >= (y - pix)) {       
                                 /* red */
-                                mkrgba(&rgba, GREEN);                
+                                mkrgba(&rgba, RED);                
                         } else {
-                                mid = mkmid(j, x);
-                                if (abs(j - mid) >= mid) {
-                                        mkrgba(&rgba, GREEN);                
+                               if ((j < pix) || (j >= x -pix)) {         
+                                        mkrgba(&rgba, RED);                
                                         /* red */
                                 } else {
-                                        mkrgba(&rgba, GREEN);                
+                                        mkrgba(&rgba, BLACK);                
                                         /* black */
                                 }
                         }
