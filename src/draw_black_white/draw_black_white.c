@@ -9,8 +9,6 @@
 #include <errno.h>
 #include <pthread.h>
 
-#define OUTPUTFILE	"black_white.rgb"
-
 enum colours {
         RED,
         BLUE,
@@ -29,21 +27,8 @@ struct rgba {
 
 void usage(void)
 {
-	printf("usage: mkimage X Y\n");
+	printf("usage: mkimage X Y [interval pixel] [start colour 0/1]\n");
 }
-
-int mkmid(int cur, int total)
-{
-        int mid;
-
-        if (cur >= total / 2)
-                mid = total / 2 - 1;
-        else
-                mid = total / 2;
-        
-        return mid;
-
-} 
 
 void mkrgba(struct rgba *rgba, enum colours colour)
 {
@@ -77,23 +62,33 @@ int main(int argc, char *argv[])
 	int y;
 	int i, j, fd;
 	int len;
-	struct rgba rgba;
+        int interval_pixel = 0;
+        int draw_colour = WHITE;
+        struct rgba rgba;
 	char outfile[32] = {0};
 	char cmd[32] = {0};       
 	
-	if (argc < 3) {
+	if (argc < 5) {
 		usage();
 		return -1;
 	}
 
         x = atoi(argv[1]);
 	y = atoi(argv[2]);
+        interval_pixel = atoi(argv[3]);
+        if (atoi(argv[4]) == 0)
+                draw_colour = WHITE;
+        else if (atoi(argv[4]) == 1)
+                draw_colour = BLACK;
 
 	printf("x = %d y = %d\n",x ,y);
     
-	sprintf(outfile, "./%s", OUTPUTFILE);
+	sprintf(outfile, "./black_white_%s_%d.rgb",
+                draw_colour == WHITE ? "black" : "white",
+                interval_pixel);
+
 	if (!access(outfile, 0)) {
-		sprintf(cmd, "rm ./%s", OUTPUTFILE);
+		sprintf(cmd, "rm ./%s", outfile);
 		if (system(cmd)) {
 			printf("exec %s failed\n", cmd);
 		}
@@ -106,12 +101,24 @@ int main(int argc, char *argv[])
 	}   
         
 	for (i = 0; i < y; i++) {
-                for (j = 0; j < x; j++){
-                        if (i < y / 2)
-                                mkrgba(&rgba, BLACK);
-                        else
-                                mkrgba(&rgba, WHITE);
+                if (!interval_pixel) {
+                        draw_colour = BLACK;
+                } else {
+                        if ((i % (interval_pixel)) == 0) {
+                                if (draw_colour == BLACK) {
+                                        draw_colour = WHITE;
+                                } else {
+                                        draw_colour = BLACK;
+                                }
+                        } else {
+                                /* nop */
+                        }
+                }
 
+                for (j = 0; j < x; j++){
+                        
+                        mkrgba(&rgba, draw_colour);
+                        
                         len = write(fd, &rgba, sizeof(rgba));
              		if (len != sizeof(rgba)) {
              			printf("Write failed\n");
